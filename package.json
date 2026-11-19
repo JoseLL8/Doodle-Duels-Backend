@@ -1,5 +1,6 @@
 {
   "name": "doodle-duels",
+  "packageManager": "pnpm@12.4.2",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -22,13 +23,25 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
+    "@keyv/redis": "^6.1.0",
+    "@nestjs/cache-manager": "^12.0.5",
     "@nestjs/common": "^12.0.1",
+    "@nestjs/config": "^12.1.1",
     "@nestjs/core": "^12.0.1",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^12.0.1",
     "@nestjs/platform-node": "^12.5.1",
+    "@nestjs/swagger": "^12.1.2",
+    "@nestjs/terminus": "^12.2.0",
+    "@nestjs/typeorm": "^12.0.3",
+    "cache-manager": "^7.2.9",
+    "cacheable": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^1.1.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@nestjs/cli": "^12.0.0",
