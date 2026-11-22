@@ -1,3 +1,4 @@
+import { Public } from '@nestjs/authentication';
 import { Controller, Get } from '@nestjs/common';
 import { DiskHealthIndicator, HealthCheck, HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 
@@ -10,6 +11,7 @@ export class HealthController {
     ) {}
 
     @Get('ready')
+    @Public()
     @HealthCheck()
     ready() {
         return this.health.check([

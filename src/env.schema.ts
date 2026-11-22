@@ -5,6 +5,8 @@ const envSchema = z.object({
     APP_NAME: z.string().default('DoodleDuels'),
     APP_PORT: z.coerce.number(),
 
+    JWT_SECRET: z.string().min(32),
+
     BBDD_CONNECTION: z.string('postgres'),
     BBDD_HOST: z.hostname().or(z.ipv4()),
     BBDD_SYNCHRONIZE: z.string('production').or(z.string('development')),

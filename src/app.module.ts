@@ -8,6 +8,9 @@ import { Keyv, createKeyv } from '@keyv/redis';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { HealthModule } from './health/health.module.js';
 import envSchema from './env.schema.js';
+import { AuthenticationModule } from '@nestjs/authentication';
+import { AuthorizationModule } from '@nestjs/authorization';
+import { AuthModule } from './auth/auth.module.js';
 
 //const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 //dotenv.config({ path: envFile });
@@ -61,14 +64,22 @@ import envSchema from './env.schema.js';
             new Keyv({
               store: new KeyvCacheableMemory({ ttl: 60000, lruSize: 5000 }),
             }),
-            redisStore
             //redis fallback
+            redisStore
           ],
         };
       },
     }),
-    HealthModule,
-    UserModule
+    AuthenticationModule.forRoot({
+      session: {
+        absoluteTtl: '7d', //maximum session ttl
+        idleTtl: '1d' //active session ttl
+      }
+    }),
+    AuthorizationModule.forRoot(),
+    AuthModule, //register both imported AuthenticationModule and local AuthModule
+    UserModule,
+    HealthModule
   ],
   providers: [{
     provide: APP_INTERCEPTOR,
