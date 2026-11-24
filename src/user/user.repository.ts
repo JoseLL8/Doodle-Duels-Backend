@@ -1,22 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity.js';
 import { Repository } from 'typeorm';
 import { Role, UserInterface } from './user.interface.js';
 import { randomUUID } from 'crypto';
+import CreateUserDto from './dto/create-user.dto.js';
+import { PasswordHasher } from '@nestjs/authentication';
+import UpdateUserDto from './dto/update-user.dto.js';
 
 @Injectable()
 export class UserRepository {
   constructor (
+    private readonly passwordHasher: PasswordHasher,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>
   ) {}
 
   async create(
     email: string,
+    nickname: string,
     passwordHash: string
   ): Promise<UserInterface> {
-    const row: User = { id: randomUUID(), email: normalize(email), emailVerified: false, role: Role.USER, passwordHash };
+    email = normalize(email);
+    const existingUser = await this.userRepository.findOneBy({ email });
+    if (existingUser)
+      throw new ConflictException('Email not available');
+  
+    const row: User = { id: randomUUID(), email, nickname, emailVerified: false, role: Role.USER, passwordHash };
+    return await this.userRepository.save(row);
+  }
+  
+  async rawCreate(createDto: CreateUserDto) {
+    const email = normalize(createDto.email);
+    const existingUser = await this.userRepository.findOneBy({ email });
+    if (existingUser)
+      throw new ConflictException('Email not available');
+  
+    const passwordHash = await this.passwordHasher.hash(createDto.password);
+    const row: User = { id: randomUUID(), email, nickname: createDto.nickname, emailVerified: false, role: createDto.role, passwordHash };
     return await this.userRepository.save(row);
   }
 
@@ -38,9 +59,11 @@ export class UserRepository {
 
   async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
     const row = await this.findRowById(id);
-    if (row) {
-      row.passwordHash = passwordHash;
+    if (!row) {
+      return;
     }
+
+    this.userRepository.save(row);
   }
 
   async updateEmail(id: string, email: string): Promise<UserInterface | null> {
@@ -50,7 +73,18 @@ export class UserRepository {
     }
     row.email = normalize(email);
     row.emailVerified = false; // nobody has proven the new address yet
-    return toUser(row);
+    return toUser(await this.userRepository.save(row));
+  }
+
+  async updateUser(id: string, updateDto: UpdateUserDto): Promise<UserInterface> {
+    const row = await this.findRowById(id);
+    if (!row) {
+      throw new NotFoundException(`User ID ${id} not found`);
+    }
+
+    row.nickname = updateDto.nickname;
+    
+    return toUser(await this.userRepository.save(row));
   }
 
   async findRowById(id: string) {

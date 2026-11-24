@@ -14,7 +14,7 @@ export class AuthController {
   @Post('sign-up')
   @Public()
   async signUp(@Body() body: SignUpDto) {
-    const user = await this.credentialsService.register(body.email, body.password);
+    const user = await this.credentialsService.register(body.email, body.nickname, body.password);
     await this.signInService.signIn(user.id, { method: 'password' });
     return user;
   }

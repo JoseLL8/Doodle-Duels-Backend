@@ -11,6 +11,7 @@ import envSchema from './env.schema.js';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { AuthorizationModule } from '@nestjs/authorization';
 import { AuthModule } from './auth/auth.module.js';
+import SeederModule from './seeder/seeder.module.js';
 
 //const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 //dotenv.config({ path: envFile });
@@ -79,7 +80,8 @@ import { AuthModule } from './auth/auth.module.js';
     AuthorizationModule.forRoot(),
     AuthModule, //register both imported AuthenticationModule and local AuthModule
     UserModule,
-    HealthModule
+    HealthModule,
+    SeederModule
   ],
   providers: [{
     provide: APP_INTERCEPTOR,

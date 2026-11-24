@@ -9,6 +9,11 @@ export class UserPolicy {
         return true;
   }
 
+  //only for superadmin
+  create(user: UserInterface | null) {
+    return false;
+  }
+
   //users can view everyone else
   view(user: UserInterface | null) {
     if (user)

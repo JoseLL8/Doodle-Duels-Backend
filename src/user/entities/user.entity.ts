@@ -9,6 +9,9 @@ export class User {
     @Column()
     email: string;
 
+    @Column() //todo match max length with dto limits
+    nickname: string;
+
     @Column({ type: 'enum', default: Role.USER, enum: Role })
     role!: Role;
 
