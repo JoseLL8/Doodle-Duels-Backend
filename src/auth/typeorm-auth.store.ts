@@ -1,28 +1,16 @@
-
 import { Injectable } from '@nestjs/common';
 import {
   AuthenticationStorage,
-  type EmailTokenPurpose,
-  type EmailTokenRecord,
-  type EmailTokenStore,
-  type MagicLinkRecord,
-  type MagicLinkStore,
-  type MfaStore,
-  type OidcStateStore,
-  type OidcTransaction,
   type RefreshTokenRecord,
   type RefreshTokenStore,
   type SessionRecord,
   type SessionStore,
-  type TotpRecord,
 } from '@nestjs/authentication';
 import {
   DataSource,
   IsNull,
   LessThan,
   LessThanOrEqual,
-  MoreThan,
-  Or,
   type EntityTarget,
   type FindOptionsWhere,
   type ObjectLiteral,
@@ -48,8 +36,9 @@ import {
  */
 @Injectable()
 export class TypeOrmAuthenticationStore
-  implements SessionStore, RefreshTokenStore//, MfaStore, MagicLinkStore, OidcStateStore, EmailTokenStore
+  implements SessionStore, RefreshTokenStore
 {
+  //, MfaStore, MagicLinkStore, OidcStateStore, EmailTokenStore
   /** Pending links and logins kept per table: anyone can create them. */
   protected readonly maxPending: number = 100_000;
 
@@ -81,13 +70,23 @@ export class TypeOrmAuthenticationStore
   async createSession(record: SessionRecord): Promise<void> {
     // JSON-safe: the package stores what `session.metadata` returned, as JSON.
     const metadata = (record.metadata ?? null) as Record<string, Json> | null;
-    await this.manager.insert(SessionEntity, { ...record, mfa: record.mfa ?? null, metadata });
-    await this.manager.delete(SessionEntity, { expiresAt: LessThanOrEqual(record.createdAt) });
+    await this.manager.insert(SessionEntity, {
+      ...record,
+      mfa: record.mfa ?? null,
+      metadata,
+    });
+    await this.manager.delete(SessionEntity, {
+      expiresAt: LessThanOrEqual(record.createdAt),
+    });
   }
 
   async touchSession(id: string, lastActiveAt: Date): Promise<void> {
     // Conditional: a session deleted by a sign-out stays deleted.
-    await this.manager.update(SessionEntity, { id, lastActiveAt: LessThan(lastActiveAt) }, { lastActiveAt });
+    await this.manager.update(
+      SessionEntity,
+      { id, lastActiveAt: LessThan(lastActiveAt) },
+      { lastActiveAt },
+    );
   }
 
   // Whether this call deleted it: of two rotations of a session, or a rotation and a sign-out, one wins.
@@ -118,26 +117,47 @@ export class TypeOrmAuthenticationStore
 
   async saveRefreshToken(record: RefreshTokenRecord): Promise<void> {
     const claims = (record.claims ?? null) as Record<string, Json> | null;
-    await this.manager.insert(RefreshTokenEntity, { ...record, usedAt: record.usedAt ?? null, claims });
-    await this.manager.delete(RefreshTokenEntity, { familyExpiresAt: LessThanOrEqual(record.createdAt) });
+    await this.manager.insert(RefreshTokenEntity, {
+      ...record,
+      usedAt: record.usedAt ?? null,
+      claims,
+    });
+    await this.manager.delete(RefreshTokenEntity, {
+      familyExpiresAt: LessThanOrEqual(record.createdAt),
+    });
   }
 
   async markRefreshTokenUsed(id: string, at: Date): Promise<boolean> {
     // Conditional: of two refreshes with the same token, one updates the row.
-    const { affected } = await this.manager.update(RefreshTokenEntity, { id, usedAt: IsNull() }, { usedAt: at });
+    const { affected } = await this.manager.update(
+      RefreshTokenEntity,
+      { id, usedAt: IsNull() },
+      { usedAt: at },
+    );
     return affected === 1;
   }
 
   async revokeRefreshTokenFamily(familyId: string): Promise<void> {
-    await this.manager.update(RefreshTokenEntity, { familyId }, { revoked: true });
+    await this.manager.update(
+      RefreshTokenEntity,
+      { familyId },
+      { revoked: true },
+    );
   }
 
   isRefreshTokenFamilyRevoked(familyId: string): Promise<boolean> {
-    return this.manager.existsBy(RefreshTokenEntity, { familyId, revoked: true });
+    return this.manager.existsBy(RefreshTokenEntity, {
+      familyId,
+      revoked: true,
+    });
   }
 
   async revokeUserRefreshTokens(userId: string): Promise<void> {
-    await this.manager.update(RefreshTokenEntity, { userId }, { revoked: true });
+    await this.manager.update(
+      RefreshTokenEntity,
+      { userId },
+      { revoked: true },
+    );
   }
 
   // Authenticators, recovery codes and failed attempts
@@ -268,17 +288,37 @@ export class TypeOrmAuthenticationStore
   }*/
 
   /** `DELETE … RETURNING *`, as rows of the entity: the query builder returns raw column names. */
-  private async deleteReturning<T extends ObjectLiteral>(entity: EntityTarget<T>, where: FindOptionsWhere<T>): Promise<T[]> {
-    const { raw } = await this.manager.createQueryBuilder().delete().from(entity).where(where).returning('*').execute();
+  private async deleteReturning<T extends ObjectLiteral>(
+    entity: EntityTarget<T>,
+    where: FindOptionsWhere<T>,
+  ): Promise<T[]> {
+    const { raw } = await this.manager
+      .createQueryBuilder()
+      .delete()
+      .from(entity)
+      .where(where)
+      .returning('*')
+      .execute();
     const columns = this.dataSource.getMetadata(entity).columns;
     return (raw as Record<string, unknown>[]).map(
-      (row) => Object.fromEntries(columns.map((column) => [column.propertyName, row[column.databaseName]])) as T,
+      (row) =>
+        Object.fromEntries(
+          columns.map((column) => [
+            column.propertyName,
+            row[column.databaseName],
+          ]),
+        ) as T,
     );
   }
 
   /** Deletes what expired, and past `maxPending`, what expires first. */
-  private async trim<T extends { expiresAt: Date }>(entity: EntityTarget<T>, now: Date) {
-    await this.manager.delete(entity, { expiresAt: LessThanOrEqual(now) } as FindOptionsWhere<T>);
+  private async trim<T extends { expiresAt: Date }>(
+    entity: EntityTarget<T>,
+    now: Date,
+  ) {
+    await this.manager.delete(entity, {
+      expiresAt: LessThanOrEqual(now),
+    } as FindOptionsWhere<T>);
     const [cutoff] = await this.manager.find(entity, {
       select: { expiresAt: true } as never,
       order: { expiresAt: 'DESC' } as never,
@@ -286,16 +326,22 @@ export class TypeOrmAuthenticationStore
       take: 1,
     });
     if (cutoff) {
-      await this.manager.delete(entity, { expiresAt: LessThanOrEqual(cutoff.expiresAt) } as FindOptionsWhere<T>);
+      await this.manager.delete(entity, {
+        expiresAt: LessThanOrEqual(cutoff.expiresAt),
+      } as FindOptionsWhere<T>);
     }
   }
 }
 
 /** A row without its NULL columns: the package's records leave optional fields out. */
-type WithoutNulls<T> = { [K in keyof T as null extends T[K] ? never : K]: T[K] } & {
+type WithoutNulls<T> = {
+  [K in keyof T as null extends T[K] ? never : K]: T[K];
+} & {
   [K in keyof T as null extends T[K] ? K : never]?: Exclude<T[K], null>;
 };
 
 function withoutNulls<T extends object>(row: T): WithoutNulls<T> {
-  return Object.fromEntries(Object.entries(row).filter(([, value]) => value !== null)) as WithoutNulls<T>;
+  return Object.fromEntries(
+    Object.entries(row).filter(([, value]) => value !== null),
+  ) as WithoutNulls<T>;
 }

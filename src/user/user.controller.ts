@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { UserRepository } from './user.repository.js';
 import { CurrentUser } from '@nestjs/authentication';
 import { UserPolicy } from './user.policy.js';
@@ -11,12 +19,15 @@ import UpdateUserDto from './dto/update-user.dto.js';
 export class UserController {
   constructor(
     private readonly authService: AuthorizationService,
-    private readonly userService: UserRepository
+    private readonly userService: UserRepository,
   ) {}
 
   @Post()
   @Can(UserPolicy, 'create') //only for superadmin
-  async createUser(@CurrentUser() currentUser: UserInterface, @Body() createDto: CreateUserDto) {
+  async createUser(
+    @CurrentUser() currentUser: UserInterface,
+    @Body() createDto: CreateUserDto,
+  ) {
     await this.authService.authorize(UserPolicy, 'create', currentUser);
     return this.userService.rawCreate(createDto);
   }
@@ -34,15 +45,26 @@ export class UserController {
   }
 
   @Patch(':id')
-  @Can(UserPolicy, 'modify', (context) => [context.switchToHttp().getRequest().params.userId])
-  async updateUser(@CurrentUser() currentUser: UserInterface, @Param('id') id: string, @Body() updateDto: UpdateUserDto) {
+  @Can(UserPolicy, 'modify', (context) => [
+    context.switchToHttp().getRequest().params.userId,
+  ])
+  async updateUser(
+    @CurrentUser() currentUser: UserInterface,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateUserDto,
+  ) {
     await this.authService.authorize(UserPolicy, 'modify', currentUser, id);
     return this.userService.updateUser(id, updateDto);
   }
 
   @Delete(':id')
-  @Can(UserPolicy, 'modify', (context) => [context.switchToHttp().getRequest().params.userId])
-  async deleteUser(@CurrentUser() currentUser: UserInterface, @Param('id') id: string) {
+  @Can(UserPolicy, 'modify', (context) => [
+    context.switchToHttp().getRequest().params.userId,
+  ])
+  async deleteUser(
+    @CurrentUser() currentUser: UserInterface,
+    @Param('id') id: string,
+  ) {
     await this.authService.authorize(UserPolicy, 'modify', currentUser, id);
     return this.userService.deleteById(id);
   }

@@ -10,9 +10,9 @@ import { RefreshTokenEntity, SessionEntity } from './auth.entities.js';
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([SessionEntity, RefreshTokenEntity])
+    TypeOrmModule.forFeature([SessionEntity, RefreshTokenEntity]),
   ],
   controllers: [AuthController],
-  providers: [SessionAuth, CredentialsService, TypeOrmAuthenticationStore]
+  providers: [SessionAuth, CredentialsService, TypeOrmAuthenticationStore],
 })
 export class AuthModule {}

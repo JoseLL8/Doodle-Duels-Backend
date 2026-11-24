@@ -5,19 +5,17 @@ import { Role, UserInterface } from './user.interface.js';
 export class UserPolicy {
   //superadmin has access to all endpoints
   before(user: UserInterface | null) {
-    if (user?.role === Role.SUPERADMIN)
-        return true;
+    if (user?.role === Role.SUPERADMIN) return true;
   }
 
   //only for superadmin
-  create(user: UserInterface | null) {
+  create(_user: UserInterface | null) {
     return false;
   }
 
   //users can view everyone else
   view(user: UserInterface | null) {
-    if (user)
-        return true;
+    if (user) return true;
   }
 
   //users can only update and delete themselves

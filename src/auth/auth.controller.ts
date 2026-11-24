@@ -1,4 +1,10 @@
-import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Public, SignInService } from '@nestjs/authentication';
 import { SignInDto, SignUpDto } from './auth.dto.js';
 import { CredentialsService } from './credentials.service.js';
@@ -14,7 +20,11 @@ export class AuthController {
   @Post('sign-up')
   @Public()
   async signUp(@Body() body: SignUpDto) {
-    const user = await this.credentialsService.register(body.email, body.nickname, body.password);
+    const user = await this.credentialsService.register(
+      body.email,
+      body.nickname,
+      body.password,
+    );
     await this.signInService.signIn(user.id, { method: 'password' });
     return user;
   }
@@ -23,11 +33,16 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   async signIn(@Body() body: SignInDto) {
-    const user = await this.credentialsService.verify(body.email, body.password);
+    const user = await this.credentialsService.verify(
+      body.email,
+      body.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const { session } = await this.signInService.signIn(user.id, { method: 'password' });
+    const { session } = await this.signInService.signIn(user.id, {
+      method: 'password',
+    });
     return { mfaRequired: session.mfa === 'pending' };
   }
 }

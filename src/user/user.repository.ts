@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity.js';
 import { Repository } from 'typeorm';
@@ -10,34 +14,46 @@ import UpdateUserDto from './dto/update-user.dto.js';
 
 @Injectable()
 export class UserRepository {
-  constructor (
+  constructor(
     private readonly passwordHasher: PasswordHasher,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(
     email: string,
     nickname: string,
-    passwordHash: string
+    passwordHash: string,
   ): Promise<UserInterface> {
     email = normalize(email);
     const existingUser = await this.userRepository.findOneBy({ email });
-    if (existingUser)
-      throw new ConflictException('Email not available');
-  
-    const row: User = { id: randomUUID(), email, nickname, emailVerified: false, role: Role.USER, passwordHash };
+    if (existingUser) throw new ConflictException('Email not available');
+
+    const row: User = {
+      id: randomUUID(),
+      email,
+      nickname,
+      emailVerified: false,
+      role: Role.USER,
+      passwordHash,
+    };
     return await this.userRepository.save(row);
   }
-  
+
   async rawCreate(createDto: CreateUserDto) {
     const email = normalize(createDto.email);
     const existingUser = await this.userRepository.findOneBy({ email });
-    if (existingUser)
-      throw new ConflictException('Email not available');
-  
+    if (existingUser) throw new ConflictException('Email not available');
+
     const passwordHash = await this.passwordHasher.hash(createDto.password);
-    const row: User = { id: randomUUID(), email, nickname: createDto.nickname, emailVerified: false, role: createDto.role, passwordHash };
+    const row: User = {
+      id: randomUUID(),
+      email,
+      nickname: createDto.nickname,
+      emailVerified: false,
+      role: createDto.role,
+      passwordHash,
+    };
     return await this.userRepository.save(row);
   }
 
@@ -52,7 +68,9 @@ export class UserRepository {
   }
 
   /** For password sign-in only. */
-  async findCredentials(email: string): Promise<{ user: UserInterface; passwordHash: string } | null> {
+  async findCredentials(
+    email: string,
+  ): Promise<{ user: UserInterface; passwordHash: string } | null> {
     const row = await this.findRowByEmail(email);
     return row ? { user: toUser(row), passwordHash: row.passwordHash } : null;
   }
@@ -63,7 +81,8 @@ export class UserRepository {
       return;
     }
 
-    this.userRepository.save(row);
+    row.passwordHash = passwordHash;
+    await this.userRepository.save(row);
   }
 
   async updateEmail(id: string, email: string): Promise<UserInterface | null> {
@@ -76,14 +95,17 @@ export class UserRepository {
     return toUser(await this.userRepository.save(row));
   }
 
-  async updateUser(id: string, updateDto: UpdateUserDto): Promise<UserInterface> {
+  async updateUser(
+    id: string,
+    updateDto: UpdateUserDto,
+  ): Promise<UserInterface> {
     const row = await this.findRowById(id);
     if (!row) {
       throw new NotFoundException(`User ID ${id} not found`);
     }
 
     row.nickname = updateDto.nickname;
-    
+
     return toUser(await this.userRepository.save(row));
   }
 
@@ -106,5 +128,11 @@ export class UserRepository {
 }
 
 // As the package passes addresses to handlers: an accent typed as two code points matches the stored one.
-const normalize = (email: string) => email.trim().normalize('NFC').toLowerCase();
-const toUser = ({ id, email, emailVerified, role }: User): UserInterface => ({ id, email, emailVerified, role });
+const normalize = (email: string) =>
+  email.trim().normalize('NFC').toLowerCase();
+const toUser = ({ id, email, emailVerified, role }: User): UserInterface => ({
+  id,
+  email,
+  emailVerified,
+  role,
+});

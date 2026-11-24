@@ -1,6 +1,10 @@
-
-import type { EmailTokenPurpose, MfaState } from '@nestjs/authentication';
-import { Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import type { MfaState } from '@nestjs/authentication';
+import {
+  Column,
+  Entity,
+  Index,
+  PrimaryColumn,
+} from 'typeorm';
 
 // The authentication tables, read and written by TypeOrmAuthenticationStore: the same
 // tables as the Drizzle schema in src/database/schema.ts. Every column states its type, so

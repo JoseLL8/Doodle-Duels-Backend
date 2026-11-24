@@ -10,7 +10,11 @@ export class CredentialsService {
     private readonly passwordHasher: PasswordHasher,
   ) {}
 
-  async register(email: string, nickname: string, password: string): Promise<UserInterface> {
+  async register(
+    email: string,
+    nickname: string,
+    password: string,
+  ): Promise<UserInterface> {
     if (await this.userRepository.findByEmail(email)) {
       throw new ConflictException('Email already registered');
     }
@@ -24,14 +28,20 @@ export class CredentialsService {
     const found = await this.userRepository.findCredentials(email);
     // With no account (or no password), verify() checks a dummy hash, so the
     // response time does not reveal which emails are registered.
-    const valid = await this.passwordHasher.verify(password, found?.passwordHash);
+    const valid = await this.passwordHasher.verify(
+      password,
+      found?.passwordHash,
+    );
     if (!valid || !found?.passwordHash) {
       return null;
     }
     // The cost settings changed since this hash was stored: upgrade it now,
     // while we have the plaintext.
     if (this.passwordHasher.needsRehash(found.passwordHash)) {
-      await this.userRepository.updatePasswordHash(found.user.id, await this.passwordHasher.hash(password));
+      await this.userRepository.updatePasswordHash(
+        found.user.id,
+        await this.passwordHasher.hash(password),
+      );
     }
     return found.user;
   }

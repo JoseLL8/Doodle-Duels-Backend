@@ -9,6 +9,6 @@ import { UserPolicy } from './user.policy.js';
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [UserController],
   providers: [UserRepository, UserPolicy],
-  exports: [UserModule, UserRepository]
+  exports: [UserModule, UserRepository],
 })
 export class UserModule {}

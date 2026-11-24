@@ -8,14 +8,14 @@ import { SeederService } from './seeder/seeder.service.js';
 async function bootstrap() {
   const app = await NestFactory.create<NestNodeApplication>(
     AppModule,
-    new NodeAdapter()
+    new NodeAdapter(),
   );
 
   const config = new DocumentBuilder()
-      .setTitle('Doodle-Duels')
-      .setDescription('Doodle Duels API docs')
-      .setVersion('1.0')
-      .build();
+    .setTitle('Doodle-Duels')
+    .setDescription('Doodle Duels API docs')
+    .setVersion('1.0')
+    .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
