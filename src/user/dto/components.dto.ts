@@ -4,6 +4,7 @@ import { Role } from '../user.interface.js';
 import { APPConstants } from '../../common/constants.js';
 
 export class UserEmailDto {
+    @ApiProperty({ example: 'user@email.com', required: true })
     @IsEmail(
         {},
         {
@@ -37,7 +38,7 @@ export class UserNicknameDto {
  *  - Entre APPConstants.USER_PASSWORD_MIN_LENGTH y APPConstants.USER_PASSWORD_MAX_LENGTH caracteres (El límite de caracteres para hashear de Bcrypt es de 72Bytes)
 */
 export class UserPasswordDto {
-    @ApiProperty({ example: 'UnaPasswordMasFuerte1234_', required: true })
+    @ApiProperty({ example: 'PassExample123*!', required: true })
     @IsString()
     @MinLength(APPConstants.USER_PASSWORD_MIN_LENGTH, {
         message: 'PASSWORD MIN LENGTH'
@@ -64,6 +65,7 @@ export class UserPasswordDto {
 }
 
 export class UserRoleDto {
+    @ApiProperty({ example: Role.USER, enum: Role, enumName: 'Role', required: true })
     @IsEnum(Role)
     role!: Role;
 }

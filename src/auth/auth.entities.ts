@@ -71,7 +71,7 @@ export class RefreshTokenEntity {
   claims: Record<string, Json> | null;
 }
 
-@Entity('mfa_authenticators')
+/*@Entity('mfa_authenticators')
 export class MfaAuthenticatorEntity {
   @PrimaryColumn({ type: 'text', name: 'user_id' })
   userId: string;
@@ -187,4 +187,4 @@ export class EmailTokenEntity {
 
   @Column({ type: 'timestamptz', name: 'expires_at' })
   expiresAt: Date;
-}
+}*/

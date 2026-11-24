@@ -28,12 +28,12 @@ import {
   type ObjectLiteral,
 } from 'typeorm';
 import {
-  EmailTokenEntity,
-  MagicLinkEntity,
-  MfaAuthenticatorEntity,
-  MfaFailureEntity,
-  MfaRecoveryCodeEntity,
-  OidcLoginEntity,
+  //EmailTokenEntity,
+  //MagicLinkEntity,
+  //MfaAuthenticatorEntity,
+  //MfaFailureEntity,
+  //MfaRecoveryCodeEntity,
+  //OidcLoginEntity,
   RefreshTokenEntity,
   SessionEntity,
   type Json,
